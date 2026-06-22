@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
+      - NASA_API_KEY=${NASA_API_KEY:-DEMO_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - DATABASE_PATH=./data/app.db
+      - NODE_ENV=production
+    volumes:
+      - backend_data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  backend_data:
