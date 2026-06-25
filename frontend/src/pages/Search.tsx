@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
-import { Search as SearchIcon, Sparkles, Filter, X, RotateCcw } from "lucide-react";
+import { Search as SearchIcon, Sparkles, Filter, X, RotateCcw, GitCompare } from "lucide-react";
 import { useImageStore } from "../store/imageStore";
 import ImageGrid from "../components/ImageGrid";
 import AddToCollectionModal from "../components/AddToCollectionModal";
 import type { NASAImage } from "../types";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 
 export default function SearchPage() {
+  const navigate = useNavigate();
   const {
     images,
     roverPhotos,
@@ -15,6 +17,7 @@ export default function SearchPage() {
     enriching,
     selectedImage,
     aiEnrichment,
+    totalResults,
     searchMode,
     search,
     fetchRoverPhotos,
@@ -29,26 +32,36 @@ export default function SearchPage() {
   const [rover, setRover] = useState("Curiosity");
   const [camera, setCamera] = useState("");
   const [sol, setSol] = useState("1000");
+  const [page, setPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [addToCollectionImage, setAddToCollectionImage] =
     useState<NASAImage | null>(null);
-  const [compareList, setCompareList] = useState<string[]>([]);
+  const [compareList, setCompareList] = useState<NASAImage[]>([]);
 
   const handleSearch = useCallback(
     (e?: React.FormEvent) => {
       e?.preventDefault();
+      setPage(1);
       if (searchMode === "nasa") {
-        search(query || "space", { year: year || undefined });
+        search(query || "space", { year: year || undefined, page: 1 });
       } else {
         fetchRoverPhotos(rover, parseInt(sol) || 1000, camera || undefined);
       }
     },
-    [query, year, searchMode, rover, sol, camera]
+    [query, year, searchMode, rover, sol, camera, search, fetchRoverPhotos]
   );
 
   useEffect(() => {
-    search("space");
+    search("space", { page: 1 });
   }, []);
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    search(query || "space", { year: year || undefined, page: nextPage }, true);
+  };
+
+  const hasMore = images.length < totalResults;
 
   const handleSelectImage = (image: NASAImage) => {
     selectImage(image);
@@ -75,14 +88,14 @@ export default function SearchPage() {
   };
 
   const handleToggleCompare = (image: NASAImage) => {
-    if (compareList.includes(image.nasaId)) {
-      setCompareList((prev) => prev.filter((id) => id !== image.nasaId));
+    if (compareList.find((i) => i.nasaId === image.nasaId)) {
+      setCompareList((prev) => prev.filter((i) => i.nasaId !== image.nasaId));
     } else {
       if (compareList.length >= 6) {
         toast.error("Máximo 6 imágenes para comparar");
         return;
       }
-      setCompareList((prev) => [...prev, image.nasaId]);
+      setCompareList((prev) => [...prev, image]);
     }
   };
 
@@ -166,14 +179,28 @@ export default function SearchPage() {
             )}
 
             {compareList.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setCompareList([])}
-                className="flex items-center gap-1.5 text-sm text-space-400 hover:text-space-200 px-3 py-1.5 rounded-lg transition-colors"
-              >
-                <RotateCcw className="w-3 h-3" />
-                Limpiar ({compareList.length})
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate("/compare", {
+                      state: { preselected: compareList },
+                    })
+                  }
+                  className="flex items-center gap-1.5 text-sm bg-space-700 hover:bg-space-600 text-space-200 px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  <GitCompare className="w-3.5 h-3.5" />
+                  Comparar ({compareList.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCompareList([])}
+                  className="flex items-center gap-1.5 text-sm text-space-400 hover:text-space-200 px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  Limpiar
+                </button>
+              </>
             )}
           </div>
 
@@ -265,8 +292,20 @@ export default function SearchPage() {
         onEnrich={handleEnrich}
         onAddToCollection={handleAddToCollection}
         onToggleCompare={handleToggleCompare}
-        compareList={compareList}
+        compareList={compareList.map((i) => i.nasaId)}
       />
+
+      {/* Load More */}
+      {searchMode === "nasa" && !loading && hasMore && (
+        <div className="flex justify-center pt-2 pb-4">
+          <button
+            onClick={handleLoadMore}
+            className="btn-secondary flex items-center gap-2 px-8"
+          >
+            Cargar más imágenes ({images.length}/{totalResults})
+          </button>
+        </div>
+      )}
 
       {/* Image Detail Panel */}
       {selectedImage && (
