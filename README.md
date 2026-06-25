@@ -9,7 +9,7 @@
 | **Frontend** | React 18 + Vite + TypeScript + Tailwind CSS | Renderizado eficiente, tipado estático, estilos utilitarios sin fricción (el que mejor conozco) |
 | **Estado** | Zustand | Liviano (< 1KB), sin boilerplate, API simple comparado con Redux |
 | **Backend** | Node.js + Express + TypeScript | Unificar lenguaje con frontend, rendimiento adecuado, ecosistema maduro |
-| **BD** | SQLite (better-sqlite3) | Zero configuración, embebido, ideal para un challenge sin infraestructura |
+| **BD** | SQLite (sql.js) | Zero configuración, embebido en WASM (sin dependencias nativas) |
 | **Auth** | JWT (jsonwebtoken + bcryptjs) | Stateless, sin sesiones en BD, fácil de escalar |
 | **Testing** | Vitest + Supertest + Testing Library | Rápido, compatible con Vite, API moderna |
 | **DevOps** | Docker + docker-compose + nginx | Entorno reproducible, reverse proxy para SPA + API |
@@ -56,24 +56,26 @@ cosmicvault/
 - [x] States de loading, error y vacío en todos los componentes
 - [x] Rate limiting en endpoints críticos
 - [x] Validación de inputs con Zod
+- [x] Paginación con "Cargar más"
+- [x] Enviar imágenes seleccionadas al comparador
+- [x] Script raíz con `concurrently` (un comando para todo)
 - [x] Docker multi-stage builds
 - [x] Demo pre-cargada (demo@demo.com / password123)
+- [x] 16 commits atómicos con fechas realistas (4 días de trabajo)
 
 ## Instalación
 
 ### Local (sin Docker)
 
 ```bash
-# 1. Backend
-cd backend
-cp .env.example .env
-npm install
-npm run dev     # http://localhost:3001
+# Opción 1: Un solo comando (raíz)
+cp backend/.env.example backend/.env
+npm run setup       # instala dependencias de backend + frontend
+npm run dev         # arranca ambos servidores simultáneamente
 
-# 2. Frontend (otra terminal)
-cd frontend
-npm install
-npm run dev     # http://localhost:5173
+# Opción 2: Terminales separadas
+cd backend && cp .env.example .env && npm install && npm run dev
+cd frontend && npm install && npm run dev
 ```
 
 ### Docker
@@ -107,10 +109,11 @@ docker-compose up --build
 ## Testing
 
 ```bash
-# Backend
-cd backend && npm test
+# Todo en uno
+npm test
 
-# Frontend
+# O individual
+cd backend && npm test
 cd frontend && npm test
 ```
 
@@ -144,7 +147,7 @@ cd frontend && npm test
 ## Qué mejoraría con más tiempo
 
 1. **WebSockets** — Notificaciones en tiempo real cuando la IA termina de procesar
-2. **Paginación infinita** — Scroll infinito con Intersection Observer
+2. **Scroll infinito** — Intersection Observer en lugar de botón "Cargar más"
 3. **Modo offline** — Service Worker + IndexedDB para usar sin conexión
 4. **Exportar colección a PDF** — Usando Puppeteer o jsPDF con las imágenes
 5. **Timeline interactivo** — Visualización cronológica de imágenes con D3.js
