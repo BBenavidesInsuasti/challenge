@@ -1,9 +1,9 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { GitCompare, Sparkles, X, Search, Loader2 } from "lucide-react";
-import { useImageStore } from "../store/imageStore";
-import { aiApi } from "../services/api";
+import { imagesApi, aiApi } from "../services/api";
 import toast from "react-hot-toast";
-import type { NASAImage, AIEnrichment } from "../types";
+import type { NASAImage } from "../types";
 
 interface CompareSlot {
   image: NASAImage | null;
@@ -13,13 +13,25 @@ interface CompareSlot {
 }
 
 export default function ImageComparator() {
-  const [slots, setSlots] = useState<CompareSlot[]>([
-    { image: null, query: "", searching: false, results: [] },
-    { image: null, query: "", searching: false, results: [] },
-  ]);
+  const location = useLocation();
+  const preselected = (location.state as { preselected?: NASAImage[] })
+    ?.preselected;
+
+  const [slots, setSlots] = useState<CompareSlot[]>(() => {
+    const initial: CompareSlot[] = [
+      { image: null, query: "", searching: false, results: [] },
+      { image: null, query: "", searching: false, results: [] },
+    ];
+    if (preselected) {
+      preselected.slice(0, 2).forEach((img, i) => {
+        if (i < 2) initial[i] = { ...initial[i], image: img };
+      });
+    }
+    return initial;
+  });
+
   const [comparing, setComparing] = useState(false);
   const [comparison, setComparison] = useState<string | null>(null);
-  const searchImages = useImageStore((s) => s.search);
 
   const handleSearch = async (index: number, q: string) => {
     if (!q.trim()) return;
@@ -31,9 +43,7 @@ export default function ImageComparator() {
     });
 
     try {
-      const { results } = await (
-        await import("../services/api")
-      ).imagesApi.search(q);
+      const { results } = await imagesApi.search(q);
       setSlots((prev) => {
         const next = [...prev];
         next[index] = { ...next[index], searching: false, results };
