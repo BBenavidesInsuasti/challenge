@@ -1,0 +1,16 @@
+{
+  "name": "cosmicvault",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CosmicVault — Plataforma de Exploración Espacial con IA",
+  "scripts": {
+    "dev": "concurrently -n BE,FE -c cyan,green \"cd backend && npm run dev\" \"cd frontend && npm run dev\"",
+    "build": "cd backend && npm run build && cd ../frontend && npm run build",
+    "test": "cd backend && npm test && cd ../frontend && npm test",
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "setup": "npm run install:all && echo '✅ Listo. Corre: npm run dev'"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
