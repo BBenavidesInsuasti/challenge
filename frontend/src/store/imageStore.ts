@@ -12,7 +12,7 @@ interface ImageState {
   totalResults: number;
   currentQuery: string;
   searchMode: "nasa" | "rovers";
-  search: (query: string, filters?: { year?: string; page?: number }) => Promise<void>;
+  search: (query: string, filters?: { year?: string; page?: number }, append?: boolean) => Promise<void>;
   fetchRoverPhotos: (rover: string, sol?: number, camera?: string) => Promise<void>;
   selectImage: (image: NASAImage | null) => void;
   enrichImage: (title: string, description?: string) => Promise<void>;
@@ -31,11 +31,15 @@ export const useImageStore = create<ImageState>((set) => ({
   currentQuery: "",
   searchMode: "nasa",
 
-  search: async (query, filters) => {
-    set({ loading: true, currentQuery: query, aiEnrichment: null });
+  search: async (query, filters, append = false) => {
+    set({ loading: true, ...(append ? {} : { currentQuery: query, aiEnrichment: null }) });
     try {
       const { results, total } = await imagesApi.search(query, filters);
-      set({ images: results, totalResults: total, loading: false });
+      set((state) => ({
+        images: append ? [...state.images, ...results] : results,
+        totalResults: total,
+        loading: false,
+      }));
     } catch {
       set({ loading: false });
     }
