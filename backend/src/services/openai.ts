@@ -223,27 +223,70 @@ function generateMockComparison(data: {
   title2: string;
   description2: string;
 }): AIComparison {
-  const d1 = data.description1?.slice(0, 100) || "No disponible";
-  const d2 = data.description2?.slice(0, 100) || "No disponible";
+  const d1 = data.description1?.slice(0, 120) || "una escena del espacio";
+  const d2 = data.description2?.slice(0, 120) || "una escena del espacio";
+
+  const h = hashString(data.title1 + data.title2);
+  const variants = [
+    {
+      diffs: [
+        `${data.title1} documenta un aspecto diferente del espacio en comparación con ${data.title2}`,
+        `La composición visual y el contexto histórico de cada fotografía son distintos`,
+        `Cada imagen fue capturada con un propósito y enfoque técnico diferente`,
+      ],
+      common: [
+        "Ambas pertenecen al catálogo oficial de la NASA",
+        "Comparten el propósito de documentar y educar sobre el espacio",
+        "Representan el trabajo continuo de exploración espacial",
+      ],
+    },
+    {
+      diffs: [
+        `${data.title1} se enfoca en un tema distinto al de ${data.title2}`,
+        `Las condiciones y el contexto de captura de cada imagen son únicos`,
+        `Cada fotografía aporta una perspectiva diferente del universo`,
+      ],
+      common: [
+        "Ambas forman parte del archivo histórico de la NASA",
+        "Fueron capturadas como parte de misiones de documentación espacial",
+        "Contribuyen al conocimiento público sobre la exploración del espacio",
+      ],
+    },
+  ];
+
+  const v = variants[h % variants.length];
 
   return {
-    comparison: `## Comparación: ${data.title1} vs ${data.title2}\n\n` +
-      `**${data.title1}** nos presenta ${d1.toLowerCase()}. Esta imagen destaca por su valor documental y la perspectiva única que ofrece del espacio.\n\n` +
-      `Por otro lado, **${data.title2}** nos muestra ${d2.toLowerCase()}. Una pieza visual que complementa nuestra comprensión del universo.\n\n` +
-      `Ambas imágenes, aunque diferentes en su enfoque y contenido, comparten el mismo propósito: acercarnos a la inmensidad del cosmos y recordarnos la importancia de la exploración espacial. Mientras una nos habla del pasado y los fenómenos naturales, la otra representa el presente y el futuro de la presencia humana en el espacio.\n\n` +
-      `En conjunto, estas dos imágenes forman un diálogo visual que enriquece nuestra perspectiva: desde lo natural a lo humano, desde lo lejano a lo tangible. La NASA continúa documentando no solo el universo, sino también nuestro lugar en él.`,
-    keyDifferences: [
-      `${data.title1} se enfoca en un contenido predominantemente astronómico/natural`,
-      `${data.title2} representa aspectos de la exploración humana o tecnológica`,
-      `La composición visual y el contexto histórico de cada imagen difieren significativamente`,
-    ],
-    commonElements: [
-      "Ambas pertenecen al catálogo oficial de la NASA",
-      "Comparten el propósito de documentar y educar sobre el espacio",
-      "Representan el trabajo continuo de exploración espacial",
-    ],
-    tags: ["NASA", "comparación-espacial", "exploración", "astronomía", "cosmos", "ciencia"],
+    comparison:
+      `## Comparación: ${data.title1} vs ${data.title2}\n\n` +
+      `**${data.title1}** — ${d1}.\n\n` +
+      `**${data.title2}** — ${d2}.\n\n` +
+      `Ambas imágenes pertenecen al archivo de la NASA y documentan distintos aspectos de la exploración espacial. La primera nos acerca a ${describeImage(data.title1, data.description1)}, mientras que la segunda destaca por ${describeImage(data.title2, data.description2)}.\n\n` +
+      `Juntas, estas fotografías muestran la amplitud del trabajo de la NASA: desde la documentación de nuestro planeta y el espacio cercano, hasta los preparativos para las próximas misiones que nos llevarán más lejos en el cosmos. Cada imagen cuenta una historia única y valiosa.`,
+    keyDifferences: v.diffs,
+    commonElements: v.common,
+    tags: ["NASA", "exploración-espacial", "astronomía", "documentación", "ciencia", "cosmos"],
   };
+}
+
+function describeImage(title: string, description: string): string {
+  const lower = (title + " " + description).toLowerCase();
+  if (lower.includes("astronaut") || lower.includes("crew") || lower.includes("training") || lower.includes("spacex")) {
+    return "la preparación humana y tecnológica para la exploración del espacio";
+  }
+  if (lower.includes("mars") || lower.includes("marte") || lower.includes("rover") || lower.includes("planet")) {
+    return "la geografía y los misterios de otros planetas";
+  }
+  if (lower.includes("nebula") || lower.includes("nebula") || lower.includes("galaxy") || lower.includes("star") || lower.includes("cosmic")) {
+    return "los fenómenos más lejanos y fascinantes del universo";
+  }
+  if (lower.includes("earth") || lower.includes("tierra") || lower.includes("station") || lower.includes("iss")) {
+    return "la vida y el trabajo en el espacio cercano a la Tierra";
+  }
+  if (lower.includes("moon") || lower.includes("luna") || lower.includes("lunar") || lower.includes("artemis")) {
+    return "los preparativos para el retorno de la humanidad a la Luna";
+  }
+  return "la inmensidad y diversidad del cosmos documentado por la NASA";
 }
 
 function hashString(str: string): number {
