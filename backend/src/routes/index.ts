@@ -44,5 +44,6 @@ router.delete(
 );
 
 router.post("/enrich", authenticate, externalApiLimiter, openaiController.enrich);
+router.post("/compare", authenticate, externalApiLimiter, openaiController.compare);
 
 export default router;
