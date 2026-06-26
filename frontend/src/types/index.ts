@@ -54,6 +54,13 @@ export interface AIEnrichment {
   aiSummary: string;
 }
 
+export interface AIComparison {
+  comparison: string;
+  keyDifferences: string[];
+  commonElements: string[];
+  tags: string[];
+}
+
 export interface AuthResponse {
   token: string;
   user: User;

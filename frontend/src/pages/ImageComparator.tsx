@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { GitCompare, Sparkles, X, Search, Loader2 } from "lucide-react";
 import { imagesApi, aiApi } from "../services/api";
 import toast from "react-hot-toast";
-import type { NASAImage } from "../types";
+import type { NASAImage, AIComparison } from "../types";
 
 interface CompareSlot {
   image: NASAImage | null;
@@ -31,7 +31,7 @@ export default function ImageComparator() {
   });
 
   const [comparing, setComparing] = useState(false);
-  const [comparison, setComparison] = useState<string | null>(null);
+  const [comparisonData, setComparisonData] = useState<AIComparison | null>(null);
 
   const handleSearch = async (index: number, q: string) => {
     if (!q.trim()) return;
@@ -70,7 +70,7 @@ export default function ImageComparator() {
       };
       return next;
     });
-    setComparison(null);
+    setComparisonData(null);
   };
 
   const removeImage = (index: number) => {
@@ -79,7 +79,7 @@ export default function ImageComparator() {
       next[index] = { ...next[index], image: null };
       return next;
     });
-    setComparison(null);
+    setComparisonData(null);
   };
 
   const handleCompare = async () => {
@@ -90,22 +90,14 @@ export default function ImageComparator() {
 
     setComparing(true);
     try {
-      const data = await aiApi.enrich(
-        `Comparación: "${slots[0].image.title}" vs "${slots[1].image.title}"`,
-        `Imagen 1: ${slots[0].image.title} - ${slots[0].image.description}\nImagen 2: ${slots[1].image.title} - ${slots[1].image.description}`
-      );
+      const data = await aiApi.compare({
+        title1: slots[0].image.title,
+        description1: slots[0].image.description,
+        title2: slots[1].image.title,
+        description2: slots[1].image.description,
+      });
 
-      setComparison(
-        `## Comparación: ${slots[0].image.title} vs ${slots[1].image.title}\n\n` +
-          `### ${slots[0].image.title}\n${data.aiSummary}\n\n` +
-          `**Dato curioso:** ${data.funFact}\n\n` +
-          `### ${slots[1].image.title}\n${slots[1].image.description?.slice(0, 200) || "Sin descripción disponible"}...\n\n` +
-          `### Análisis comparativo\nAmbas imágenes pertenecen al catálogo espacial de la NASA. ` +
-          `Cada una captura aspectos únicos del cosmos, ` +
-          `desde fenómenos astronómicos hasta la exploración robótica. ` +
-          `La comparación revela la diversidad y riqueza visual del universo documentado por la NASA.\n\n` +
-          `**Tags:** ${data.tags.slice(0, 5).join(", ")}`
-      );
+      setComparisonData(data);
       toast.success("Comparación generada");
     } catch {
       toast.error("Error al generar comparación");
@@ -268,14 +260,56 @@ export default function ImageComparator() {
         ))}
       </div>
 
-      {comparison && (
+      {comparisonData && (
         <div className="card p-6">
           <h3 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
             <Sparkles className="w-5 h-5 text-cosmic-400" />
             Análisis Comparativo
           </h3>
-          <div className="prose prose-invert max-w-none text-space-200 text-sm leading-relaxed whitespace-pre-line">
-            {comparison}
+          <div className="prose prose-invert max-w-none text-space-200 text-sm leading-relaxed whitespace-pre-line mb-6">
+            {comparisonData.comparison}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div className="p-4 rounded-lg bg-space-800/50 border border-space-700/50">
+              <h4 className="text-sm font-semibold text-space-200 mb-2 flex items-center gap-1.5">
+                <X className="w-4 h-4 text-red-400" />
+                Diferencias clave
+              </h4>
+              <ul className="space-y-1.5">
+                {comparisonData.keyDifferences.map((d, i) => (
+                  <li key={i} className="text-xs text-space-300 flex items-start gap-2">
+                    <span className="text-red-400 mt-0.5">•</span>
+                    {d}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="p-4 rounded-lg bg-space-800/50 border border-space-700/50">
+              <h4 className="text-sm font-semibold text-space-200 mb-2 flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-green-400" />
+                En común
+              </h4>
+              <ul className="space-y-1.5">
+                {comparisonData.commonElements.map((c, i) => (
+                  <li key={i} className="text-xs text-space-300 flex items-start gap-2">
+                    <span className="text-green-400 mt-0.5">•</span>
+                    {c}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-1.5">
+            {comparisonData.tags.map((tag) => (
+              <span
+                key={tag}
+                className="text-xs bg-space-800 text-space-300 px-2 py-0.5 rounded-full border border-space-700"
+              >
+                #{tag}
+              </span>
+            ))}
           </div>
         </div>
       )}

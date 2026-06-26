@@ -99,4 +99,10 @@ export const collectionsApi = {
 export const aiApi = {
   enrich: (title: string, description?: string) =>
     api.post<AIEnrichment>("/enrich", { title, description }).then((r) => r.data),
+  compare: (data: {
+    title1: string;
+    description1?: string;
+    title2: string;
+    description2?: string;
+  }) => api.post<import("../types").AIComparison>("/compare", data).then((r) => r.data),
 };
